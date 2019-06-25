@@ -1,4 +1,6 @@
-Tcpdump Tutorial
+# Tcpdump Tutorial
+
+## Basics
 
 Tcpdump costituisce un'ottima alternativa a wireshark, molto più 
 frequente tra chi si occupa di sicurezza informatica, essendo un 
@@ -93,10 +95,52 @@ del comando:
 ```
 
 ```sh
- tcpdump -r capture_file.pcap -X 
+ tcpdump -nn -r capture_file.pcap -X 
  # anche in modalità lettura si applicano gli stessi flag, quindi
  # possiamo ad esempio visualizzare il contenuto dei pacchetti col flag "-X"
+ # it is useful to use -nn to have an immediate read of the file without trying
+ # to resolve each address
 ```
+
+### Favorite tcpdump launch commands
+
+
+In order to launch a high level capture, my favorite command is:
+```sh
+ tcpdump -i <interface> -nn -q
+ # so we don't lose time resolving IPs and ports and show a line per packet
+```
+
+if we want a more detailed view we can print the content of the packet by doing:
+```sh
+ tcpdump -i <interface> -nn -q -X
+```
+
+or with slightly additional information we can do:
+```sh
+ tcpdump -i <interface> -nn -X
+```
+
+Also notice that many times we want to save what we are capturing in order to
+analyze it later so basically I would suggest everytime to capture some traffic
+and display it both on stdout and on an external file, this can be done with:
+```sh
+ tcpdump -i wlp1s0 -nn -q -w - | tee capture.pcap | tcpdump -nn -q -r   -
+ # if we do not want to resolve addresses remember to insert a `-nn` on both
+ # tcpdump commands
+```
+
+
+In order to read `.pcap` files my favorite command is:
+```sh
+ tcpdump -nn -r <file.pcap>
+ # remember to not resolve IPs and services
+ # if we omit -nn we will spend time resolving each address
+ # and this will take more time to read the pcap file
+```
+
+
+## Filters
 
 Queste sono solo alcuni flag di base di tcpdump, ma il cuore è 
 costituito dalla possibilità di inserire capture filters che 
@@ -218,7 +262,7 @@ all'indirizzo di un gateway allora MOLTO probabilmente siamo in
 una situazione di ARP cache poisoning.
 
 
-### Eseguire tcpdump e altre utility di rete senza permessi di root
+## Run tcpdump and other network tools without root privileges
 
 Vediamo la procedura per poter utilizzare tcpdump e altri programmi come ad
 esempio scapy (o altri packet crafter) senza privilegi di root. 
