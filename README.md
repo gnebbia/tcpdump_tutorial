@@ -102,45 +102,50 @@ del comando:
  # to resolve each address
 ```
 
-### Favorite tcpdump launch commands
+### Comandi Preferiti
 
 
-In order to launch a high level capture, my favorite command is:
+Per lanciare una cattura di pacchetti e capire ad alto livello cosa sta
+succedendo il mio comando preferito e':
 ```sh
  tcpdump -i <interface> -nn -q
- # so we don't lose time resolving IPs and ports and show a line per packet
+ # con -nn non perdiamo tempo a risolvere indirizzi e con -q abbiamo un
+ # pacchetto per linea
 ```
 
-if we want a more detailed view we can print the content of the packet by doing:
+Nel caso volessimo una vista piu' dettagliata allora possiamo stampare il
+contenuto del pacchetto eseguendo:
 ```sh
  tcpdump -i <interface> -nn -q -X
+ # con -X stampiamo il contenuto del pacchetto in HEX e in ASCII
 ```
 
-or with slightly additional information we can do:
+Possiamo avere informazioni aggiuntive andando ad omettere il flag di quiet `-q`
+e quindi eseguendo:
 ```sh
  tcpdump -i <interface> -nn -X
 ```
 
-Also notice that many times we want to save what we are capturing in order to
-analyze it later so basically I would suggest everytime to capture some traffic
-and display it both on stdout and on an external file, this can be done with:
+Nota che in tutti questi casi non stiamo salvando l'output in un file, per poter
+salvare l'output in un pcap e allo stesso momento poter visualizzare a schermo
+su stdout cosa sta avvenendo possiamo eseguire:
 ```sh
  tcpdump -i wlp1s0 -nn -q -w - | tee capture.pcap | tcpdump -nn -q -r   -
- # if we do not want to resolve addresses remember to insert a `-nn` on both
- # tcpdump commands
+ # ricorda di inserire il flag `-nn` in entrambi i comandi tcpdump
+ # se non vogliamo risolvere gli indirizzi
 ```
 
-
-In order to read `.pcap` files my favorite command is:
+Per leggere un file pcap il mio comando preferito e':
 ```sh
  tcpdump -nn -r <file.pcap>
- # remember to not resolve IPs and services
- # if we omit -nn we will spend time resolving each address
- # and this will take more time to read the pcap file
+ # ricorda di specificare `-nn` se non si vuole perdere tempo a risolvere gli
+ # indirizzi
+ # nel caso questo flag venisse omesso, in pratica viene speso del tempo per
+ # ogni pacchetto in cui un indirizzo puo' essere risolto
 ```
 
 
-## Filters
+## Filtri
 
 Queste sono solo alcuni flag di base di tcpdump, ma il cuore è 
 costituito dalla possibilità di inserire capture filters che 
@@ -186,32 +191,32 @@ determinati flag attivi:
 
 ```sh
  tcpdump 'tcp[13] & 32!=0' 
- # mostrami solo i pacchetti con il   flag URG settato
+ # mostrami solo i pacchetti con il flag URG settato
 ```
 
 ```sh
  tcpdump 'tcp[13] & 16!=0' 
- # mostrami solo i pacchetti con il   flag ACK settato
+ # mostrami solo i pacchetti con il flag ACK settato
 ```
 
 ```sh
  tcpdump 'tcp[13] & 8!=0' 
- # mostrami solo i pacchetti con il   flag PSH settato
+ # mostrami solo i pacchetti con il flag PSH settato
 ```
 
 ```sh
  tcpdump 'tcp[13] & 4!=0' 
- # mostrami solo i pacchetti con il   flag RST settato
+ # mostrami solo i pacchetti con il flag RST settato
 ```
 
 ```sh
  tcpdump 'tcp[13] & 2!=0' 
- # mostrami solo i pacchetti con il   flag SYN settato
+ # mostrami solo i pacchetti con il flag SYN settato
 ```
 
 ```sh
  tcpdump 'tcp[13] & 1!=0' 
- # mostrami solo i pacchetti con il   flag FIN settato
+ # mostrami solo i pacchetti con il flag FIN settato
 ```
 
 ```sh
@@ -254,7 +259,7 @@ logica:
 
 192.168.1.100 is 00:00:00:00
 
-192.168.1.100 is ff:ff:ff:ffcioè se lo stesso IP compare con due 
+192.168.1.100 is ff:ff:ff:ff cioè se lo stesso IP compare con due 
 indirizzi MAC diversi in breve tempo, allora la situazione è 
 sospettosa e probabilmente ci troviamo in una situazione di ARP 
 cache poisoning. In genere se questo comportamento è associato 
@@ -262,7 +267,78 @@ all'indirizzo di un gateway allora MOLTO probabilmente siamo in
 una situazione di ARP cache poisoning.
 
 
-## Run tcpdump and other network tools without root privileges
+### Filtri di uso comune
+
+Vediamo ora una lista di filtri che potrebbero essere di uso comune.
+
+
+#### Trovare User Agents HTTP
+
+```sh
+tcpdump -vvAls0 | grep 'User-Agent:'
+```
+
+
+#### Trovare richieste HTTP in cleartext
+
+```sh
+tcpdump -vvAls0 | grep 'GET'
+```
+
+Possiamo anche cercare richieste POST attraverso lo stesso filtro 
+e cambiando la stringa in 'POST'.
+
+
+#### Trovare Header Host di richieste HTTP
+
+```sh
+ tcpdump -vvAls0 | grep 'Host:'
+```
+
+
+#### Trovare Cookies HTTP
+
+```sh
+ tcpdump -vvAls0 | grep 'Set-Cookie|Host:|Cookie:'
+```
+
+
+#### Trovare connessioni SSH
+
+```sh
+ tcpdump 'tcp[(tcp[12]>>2):4] = 0x5353482D'
+```
+
+
+#### Trovare Traffico DNS
+
+```sh
+ tcpdump -vvAs0 port 53
+```
+
+
+#### Trovare Traffico FTP
+
+```sh
+ tcpdump -vvAs0 port ftp or ftp-data
+```
+
+
+#### Trovare Traffico NTP
+
+```sh
+tcpdump -vvAs0 port 123
+```
+
+#### Trovare Password in cleartext
+
+```sh
+tcpdump port http or port ftp or port smtp or port imap or port pop3 or port telnet -lA | egrep -i -B5 \
+'pass=|pwd=|log=|login=|user=|username=|pw=|passw=|passwd= |password=|pass:|user:|username:|password:|login:|pass |user '
+```
+
+
+## Lanciare tcpdump ed altri tool di rete senza privilegi di root
 
 Vediamo la procedura per poter utilizzare tcpdump e altri programmi come ad
 esempio scapy (o altri packet crafter) senza privilegi di root. 
