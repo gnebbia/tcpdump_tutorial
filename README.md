@@ -387,3 +387,10 @@ capabilities a python e a scapy, con:
 In questo caso abbiamo fornito le capabilities e i permessi piu' in generale
 all'interprete python e a scapy, ma la procedura e' generale possiamo
 riutilizzarla per qualsiasi altro programma.
+
+
+## Lanciare tcpdump su una macchina remota e leggere le tracce con wireshark
+
+```sh
+ssh root@remotesystem 'tcpdump -s0 -c 1000 -nn -w - not port 22' | wireshark -k -i 
+```
